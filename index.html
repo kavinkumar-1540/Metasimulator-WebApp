@@ -508,298 +508,292 @@
        EVERYTHING IS INSIDE THIS HTML FILE
        ========================================================= -->
 
-  <script>
+<script>
+  /* ============================================================
+     SCREEN CONFIGURATION
+     ============================================================ */
 
-    /* =========================================================
-       SCREEN CONFIGURATION
-       ========================================================= */
+  const screens = {
+    home: {
+      screen: "home",
+      title: "POWERCONNECT.AI",
+      label: "",
+      value: ""
+    },
 
-    const screens = {
+    balance: {
+      screen: "balance",
+      title: "Account Balance",
+      label: "CURRENT BALANCE",
+      value: "$124.52"
+    },
 
-      home: {
-        route: "/",
-        title: "POWERCONNECT.AI"
-      },
+    bill: {
+      screen: "bill",
+      title: "Latest Bill",
+      label: "AMOUNT DUE",
+      value: "$86.41"
+    },
 
-      balance: {
-        route: "/balance",
-        title: "Account Balance",
-        label: "CURRENT BALANCE",
-        value: "$124.52"
-      },
-
-      bill: {
-        route: "/bill",
-        title: "Latest Bill",
-        label: "AMOUNT DUE",
-        value: "$86.41"
-      },
-
-      usage: {
-        route: "/usage",
-        title: "Usage",
-        label: "CURRENT USAGE",
-        value: "642 kWh"
-      }
-
-    };
-
-
-    /* =========================================================
-       DOM REFERENCES
-       ========================================================= */
-
-    const homeScreen =
-      document.getElementById("homeScreen");
-
-    const resultScreen =
-      document.getElementById("resultScreen");
-
-    const resultTitle =
-      document.getElementById("resultTitle");
-
-    const responseLabel =
-      document.getElementById("responseLabel");
-
-    const responseValue =
-      document.getElementById("responseValue");
-
-    const backButton =
-      document.getElementById("backButton");
-
-    const balanceCard =
-      document.getElementById("balanceCard");
-
-    const billCard =
-      document.getElementById("billCard");
-
-    const usageCard =
-      document.getElementById("usageCard");
-
-
-    /* =========================================================
-       GET SCREEN FROM URL
-       ========================================================= */
-
-    function getScreenFromPath(path) {
-
-      if (path === "/balance") {
-        return "balance";
-      }
-
-      if (path === "/bill") {
-        return "bill";
-      }
-
-      if (path === "/usage") {
-        return "usage";
-      }
-
-      return "home";
+    usage: {
+      screen: "usage",
+      title: "Usage",
+      label: "CURRENT USAGE",
+      value: "642 kWh"
     }
+  };
 
 
-    /* =========================================================
-       RENDER SCREEN
-       =========================================================
-       
-       IMPORTANT:
-       This function DOES NOT call pushState().
-       
-       Therefore:
-       - Browser Back works correctly
-       - Browser Forward works correctly
-       - popstate doesn't create duplicate entries
-       ========================================================= */
+  /* ============================================================
+     DOM ELEMENTS
+     ============================================================ */
 
-    function renderScreen(screenName) {
+  const homeScreen =
+    document.getElementById("homeScreen");
 
-      const screen =
-        screens[screenName] || screens.home;
+  const resultScreen =
+    document.getElementById("resultScreen");
 
+  const resultTitle =
+    document.getElementById("resultTitle");
 
-      /* HOME */
+  const responseLabel =
+    document.getElementById("responseLabel");
 
-      if (screenName === "home") {
+  const responseValue =
+    document.getElementById("responseValue");
 
-        homeScreen.classList.remove("hidden");
+  const backButton =
+    document.getElementById("backButton");
 
-        resultScreen.classList.add("hidden");
+  const balanceCard =
+    document.getElementById("balanceCard");
 
-        return;
-      }
+  const billCard =
+    document.getElementById("billCard");
 
-
-      /* RESULT */
-
-      homeScreen.classList.add("hidden");
-
-      resultScreen.classList.remove("hidden");
+  const usageCard =
+    document.getElementById("usageCard");
 
 
-      resultTitle.textContent =
-        screen.title;
+  /* ============================================================
+     READ SCREEN FROM CURRENT URL
+     
+     /
+     /?screen=balance
+     /?screen=bill
+     /?screen=usage
+     ============================================================ */
 
-      responseLabel.textContent =
-        screen.label;
+  function getCurrentScreen() {
 
-      responseValue.textContent =
-        screen.value;
-
-
-      /*
-       * Focus Back button.
-       *
-       * This is only focus state.
-       * It does NOT create browser history.
-       */
-
-      backButton.focus();
-    }
-
-
-    /* =========================================================
-       NAVIGATE TO SCREEN
-       =========================================================
-       
-       This is the important QA fix.
-       
-       Actual screen changes create a real same-origin
-       browser history entry.
-       ========================================================= */
-
-    function navigateTo(screenName) {
-
-      const screen =
-        screens[screenName];
-
-
-      if (!screen) {
-        return;
-      }
-
-
-      /*
-       * Don't create duplicate history entries.
-       */
-
-      if (
-        window.location.pathname === screen.route
-      ) {
-
-        renderScreen(screenName);
-
-        return;
-      }
-
-
-      /*
-       * STANDARD BROWSER HISTORY
-       */
-
-      window.history.pushState(
-        {
-          screen: screenName
-        },
-        "",
-        screen.route
+    const params =
+      new URLSearchParams(
+        window.location.search
       );
 
+    const screen =
+      params.get("screen");
 
-      /*
-       * Render the newly navigated screen.
-       */
+    if (
+      screen &&
+      Object.prototype.hasOwnProperty.call(
+        screens,
+        screen
+      )
+    ) {
+      return screen;
+    }
+
+    return "home";
+  }
+
+
+  /* ============================================================
+     BUILD URL FOR SCREEN
+     ============================================================ */
+
+  function getScreenUrl(screenName) {
+
+    if (screenName === "home") {
+      return window.location.pathname;
+    }
+
+    return (
+      window.location.pathname +
+      "?screen=" +
+      encodeURIComponent(screenName)
+    );
+  }
+
+
+  /* ============================================================
+     RENDER SCREEN
+     
+     IMPORTANT:
+     This function NEVER modifies browser history.
+     ============================================================ */
+
+  function renderScreen(screenName) {
+
+    const screen =
+      screens[screenName] ||
+      screens.home;
+
+
+    /* HOME */
+
+    if (screenName === "home") {
+
+      homeScreen.classList.remove("hidden");
+
+      resultScreen.classList.add("hidden");
+
+      return;
+    }
+
+
+    /* RESULT SCREEN */
+
+    homeScreen.classList.add("hidden");
+
+    resultScreen.classList.remove("hidden");
+
+
+    resultTitle.textContent =
+      screen.title;
+
+    responseLabel.textContent =
+      screen.label;
+
+    responseValue.textContent =
+      screen.value;
+
+
+    /*
+     * Focus is transient UI state.
+     * It does NOT create history.
+     */
+
+    backButton.focus();
+  }
+
+
+  /* ============================================================
+     NAVIGATE
+     
+     THIS IS THE IMPORTANT QA FIX.
+     
+     Every actual application screen change creates a
+     same-origin browser history entry.
+     ============================================================ */
+
+  function navigateTo(screenName) {
+
+    if (
+      !Object.prototype.hasOwnProperty.call(
+        screens,
+        screenName
+      )
+    ) {
+      return;
+    }
+
+
+    const currentScreen =
+      getCurrentScreen();
+
+
+    /*
+     * Don't create duplicate history entries.
+     */
+
+    if (currentScreen === screenName) {
+      return;
+    }
+
+
+    const url =
+      getScreenUrl(screenName);
+
+
+    /*
+     * REAL BROWSER HISTORY ENTRY
+     */
+
+    window.history.pushState(
+      {
+        screen: screenName
+      },
+      "",
+      url
+    );
+
+
+    /*
+     * Render the new application screen.
+     */
+
+    renderScreen(screenName);
+  }
+
+
+  /* ============================================================
+     CARD CLICK EVENTS
+     ============================================================ */
+
+  balanceCard.addEventListener(
+    "click",
+    function () {
+      navigateTo("balance");
+    }
+  );
+
+
+  billCard.addEventListener(
+    "click",
+    function () {
+      navigateTo("bill");
+    }
+  );
+
+
+  usageCard.addEventListener(
+    "click",
+    function () {
+      navigateTo("usage");
+    }
+  );
+
+
+  /* ============================================================
+     BROWSER BACK / FORWARD
+     
+     DO NOT CALL pushState() HERE.
+     ============================================================ */
+
+  window.addEventListener(
+    "popstate",
+    function () {
+
+      const screenName =
+        getCurrentScreen();
 
       renderScreen(screenName);
     }
+  );
 
 
-    /* =========================================================
-       CARD EVENTS
-       ========================================================= */
+  /* ============================================================
+     BACK BUTTON
+     ============================================================ */
 
-    balanceCard.addEventListener(
-      "click",
-      function () {
-
-        navigateTo("balance");
-
-      }
-    );
-
-
-    billCard.addEventListener(
-      "click",
-      function () {
-
-        navigateTo("bill");
-
-      }
-    );
-
-
-    usageCard.addEventListener(
-      "click",
-      function () {
-
-        navigateTo("usage");
-
-      }
-    );
-
-
-    /* =========================================================
-       BROWSER BACK / FORWARD
-       =========================================================
-       
-       Browser Back:
-       
-       /usage
-          ↓
-       /bill
-       
-       Browser Forward:
-       
-       /bill
-          ↓
-       /usage
-       
-       popstate only renders.
-       It does NOT push another entry.
-       ========================================================= */
-
-    window.addEventListener(
-      "popstate",
-      function () {
-
-        const screenName =
-          getScreenFromPath(
-            window.location.pathname
-          );
-
-
-        renderScreen(screenName);
-
-      }
-    );
-
-
-    /* =========================================================
-       CUSTOM BACK BUTTON
-       =========================================================
-       
-       Use browser history instead of simply showing Home.
-       ========================================================= */
-
-    function goBack() {
-
-      /*
-       * If we're on an application route,
-       * use the actual browser Back operation.
-       */
+  backButton.addEventListener(
+    "click",
+    function () {
 
       if (
-        window.location.pathname !== "/"
+        getCurrentScreen() !== "home"
       ) {
 
         window.history.back();
@@ -807,268 +801,63 @@
         return;
       }
 
-
-      /*
-       * Already at Home.
-       */
-
       renderScreen("home");
     }
+  );
 
 
-    backButton.addEventListener(
-      "click",
-      function () {
+  /* ============================================================
+     KEYBOARD SELECTION
+     
+     Selection DOES NOT create history.
+     ============================================================ */
 
-        goBack();
+  const cards = [
+    balanceCard,
+    billCard,
+    usageCard
+  ];
 
+  let selectedIndex = 0;
+
+
+  function updateSelection() {
+
+    cards.forEach(
+      function (card, index) {
+
+        if (index === selectedIndex) {
+
+          card.classList.add("selected");
+
+          card.focus();
+
+        } else {
+
+          card.classList.remove("selected");
+        }
       }
     );
+  }
 
 
-    /* =========================================================
-       KEYBOARD NAVIGATION
-       =========================================================
-       
-       Arrow keys:
-         change selection only
-       
-       Enter:
-         activates selected screen
-       
-       Escape:
-         browser Back
-       
-       Selection does NOT create history.
-       ========================================================= */
+  document.addEventListener(
+    "keydown",
+    function (event) {
 
-    const cards = [
-      balanceCard,
-      billCard,
-      usageCard
-    ];
+      /*
+       * HOME
+       */
 
-
-    let selectedIndex = 0;
-
-
-    function updateSelection() {
-
-      cards.forEach(
-        function (card, index) {
-
-          if (index === selectedIndex) {
-
-            card.classList.add("selected");
-
-            card.focus();
-
-          } else {
-
-            card.classList.remove("selected");
-
-          }
-
-        }
-      );
-
-    }
-
-
-    document.addEventListener(
-      "keydown",
-      function (event) {
-
-        /*
-         * HOME SCREEN
-         */
+      if (
+        !homeScreen.classList.contains("hidden")
+      ) {
 
         if (
-          !homeScreen.classList.contains("hidden")
+          event.key === "ArrowRight"
         ) {
 
-
-          /*
-           * Right
-           */
-
-          if (event.key === "ArrowRight") {
-
-            event.preventDefault();
-
-            selectedIndex =
-              (selectedIndex + 1) %
-              cards.length;
-
-            updateSelection();
-
-            return;
-          }
-
-
-          /*
-           * Left
-           */
-
-          if (event.key === "ArrowLeft") {
-
-            event.preventDefault();
-
-            selectedIndex =
-              (
-                selectedIndex -
-                1 +
-                cards.length
-              ) %
-              cards.length;
-
-            updateSelection();
-
-            return;
-          }
-
-
-          /*
-           * Enter
-           */
-
-          if (event.key === "Enter") {
-
-            event.preventDefault();
-
-            cards[selectedIndex].click();
-
-            return;
-          }
-
-        }
-
-
-        /*
-         * RESULT SCREEN
-         */
-
-        if (
-          !resultScreen.classList.contains("hidden")
-        ) {
-
-
-          /*
-           * Escape
-           */
-
-          if (event.key === "Escape") {
-
-            event.preventDefault();
-
-            goBack();
-
-            return;
-          }
-
-
-          /*
-           * Left arrow
-           */
-
-          if (event.key === "ArrowLeft") {
-
-            event.preventDefault();
-
-            goBack();
-
-            return;
-          }
-
-        }
-
-      }
-    );
-
-
-    /* =========================================================
-       TOUCH / SWIPE
-       =========================================================
-       
-       Swipe only changes selection.
-       
-       It does NOT create browser history.
-       
-       Actual navigation happens when the selected card
-       is clicked/tapped.
-       ========================================================= */
-
-    let touchStartX = 0;
-    let touchStartY = 0;
-
-
-    document.addEventListener(
-      "touchstart",
-      function (event) {
-
-        if (
-          !event.changedTouches ||
-          event.changedTouches.length === 0
-        ) {
-          return;
-        }
-
-
-        touchStartX =
-          event.changedTouches[0].screenX;
-
-        touchStartY =
-          event.changedTouches[0].screenY;
-
-      },
-      {
-        passive: true
-      }
-    );
-
-
-    document.addEventListener(
-      "touchend",
-      function (event) {
-
-        if (
-          !event.changedTouches ||
-          event.changedTouches.length === 0
-        ) {
-          return;
-        }
-
-
-        const touchEndX =
-          event.changedTouches[0].screenX;
-
-        const touchEndY =
-          event.changedTouches[0].screenY;
-
-
-        const deltaX =
-          touchEndX - touchStartX;
-
-        const deltaY =
-          touchEndY - touchStartY;
-
-
-        /*
-         * Ignore vertical gestures.
-         */
-
-        if (
-          Math.abs(deltaX) <= Math.abs(deltaY)
-        ) {
-          return;
-        }
-
-
-        /*
-         * Swipe LEFT
-         */
-
-        if (deltaX < -50) {
+          event.preventDefault();
 
           selectedIndex =
             (selectedIndex + 1) %
@@ -1080,11 +869,11 @@
         }
 
 
-        /*
-         * Swipe RIGHT
-         */
+        if (
+          event.key === "ArrowLeft"
+        ) {
 
-        if (deltaX > 50) {
+          event.preventDefault();
 
           selectedIndex =
             (
@@ -1096,46 +885,66 @@
 
           updateSelection();
 
+          return;
         }
 
-      },
-      {
-        passive: true
+
+        /*
+         * Enter = actual navigation
+         */
+
+        if (
+          event.key === "Enter"
+        ) {
+
+          event.preventDefault();
+
+          cards[selectedIndex].click();
+
+          return;
+        }
       }
-    );
 
 
-    /* =========================================================
-       INITIAL ROUTE
-       =========================================================
-       
-       Important:
-       
-       If QA opens:
-       
-       /balance
-       
-       directly, the Balance screen is rendered.
-       
-       No pushState() is performed here.
-       ========================================================= */
+      /*
+       * RESULT SCREEN
+       */
 
-    const initialScreen =
-      getScreenFromPath(
-        window.location.pathname
-      );
+      if (
+        !resultScreen.classList.contains("hidden")
+      ) {
+
+        if (
+          event.key === "Escape" ||
+          event.key === "ArrowLeft"
+        ) {
+
+          event.preventDefault();
+
+          window.history.back();
+
+          return;
+        }
+      }
+    }
+  );
 
 
-    renderScreen(initialScreen);
+  /* ============================================================
+     INITIAL RENDER
+     
+     IMPORTANT:
+     Initial loading does NOT call pushState().
+     ============================================================ */
 
+  const initialScreen =
+    getCurrentScreen();
 
-    /* =========================================================
-       INITIAL SELECTION
-       ========================================================= */
+  renderScreen(initialScreen);
 
-    updateSelection();
+  updateSelection();
 
-  </script>
+</script>
 
 </body>
 </html>
